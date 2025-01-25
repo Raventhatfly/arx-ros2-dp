@@ -119,6 +119,7 @@ def main(
 ):
     rclpy.init()
     arx_control = ArxControl()
+    rclpy.create_node("node")
     rclpy.spin(arx_control)
     global obs_ring_buffer, current_step
     frequency = 10
@@ -245,7 +246,7 @@ def main(
     
 
     # inference loop
-    while not rospy.is_shutdown():
+    while not rclpy.ok():
         if current_step >= max_step:
             break
 
