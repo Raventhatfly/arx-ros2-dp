@@ -55,6 +55,7 @@ from diffusion_policy.shared_memory.shared_memory_ring_buffer import SharedMemor
 import rclpy
 from rclpy.node import Node
 from message_filters import ApproximateTimeSynchronizer, Subscriber
+import message_filters
 from arm_control.msg import PosCmd
 from arx5_arm_msg.msg import RobotCmd, RobotStatus
 from sensor_msgs.msg import Image
@@ -212,21 +213,21 @@ def main(
     start_time = math.inf
 
     # ros init and subscriber
-    rospy.init_node("eval_real_ros")
-    eef_qpos = Subscriber("follow2_pos_back", PosCmd)
-    qpos = Subscriber("joint_information2", JointInformation)
-    mid = Subscriber("mid_camera", Image)
-    right = Subscriber("right_camera", Image)
+    # rclpy.init("eval_real_ros")
+    arm_status = Subscriber("arm_status", RobotStatus)
+    # qpos = Subscriber("joint_information2", JointInformation)
+    img1 = Subscriber("mid_camera", Image)
+    img2 = Subscriber("right_camera", Image)
     # control_robot2 = rospy.Publisher("test_right", JointControl, queue_size=10)
-    control_robot2 = rospy.Publisher("follow_joint_control_2", JointControl, queue_size=10)
+    # control_robot2 = rclpy.Publisher("follow_joint_control_2", JointControl, queue_size=10)
     ats = ApproximateTimeSynchronizer(
-        [eef_qpos, qpos, mid, right], queue_size=10, slop=0.1
+        [arm_status, img1, img2], queue_size=10, slop=0.1
     )
     ats.registerCallback(
         lambda *msg: callback(*msg, output_video_visualization, output_video_mid, output_video_right, max_step, start_time)
     )
     # ats.registerCallback(callback)
-    rate = rospy.Rate(frequency)
+    # rate = rospy.Rate(frequency)
 
 
     # # data ??

@@ -23,5 +23,10 @@ source /opt/ros/humble/setup.bash
 ```
 And use pip to install the requirement. The requirement.txt can be found in the repo, but it is still under maintainence and not tested.
 
+## Execute:
+To run the inference, use the following command:
+```shell
+ros2 run dp_ros dp_inference
+```
 ## History
 01.25.2025 Updated the first version by Feiyang Wu.
