@@ -43,20 +43,20 @@ from omegaconf import OmegaConf
 import scipy.spatial.transform as st
 
 
-from diffusion_policy.diffusion_policy.common.precise_sleep import precise_wait
+from diffusion_policy.common.precise_sleep import precise_wait
 # from diffusion_policy.diffusion_policy.real_word.real_inference_utils import get_real_obs_resolution, get_real_obs_dict
-from diffusion_policy.diffusion_policy.common.pytorch_util import dict_apply
-from diffusion_policy.diffusion_policy.workspace.base_workspace import BaseWorkspace
-from diffusion_policy.diffusion_policy.policy.base_image_policy import BaseImagePolicy
-from diffusion_policy.diffusion_policy.common.cv2_utils import get_image_transform
+from diffusion_policy.common.pytorch_util import dict_apply
+from diffusion_policy.workspace.base_workspace import BaseWorkspace
+from diffusion_policy.policy.base_image_policy import BaseImagePolicy
+from diffusion_policy.common.cv2_util import get_image_transform
 
-from diffusion_policy.diffusion_policy.shared_memory.shared_memory_ring_buffer import SharedMemoryRingBuffer
+from diffusion_policy.shared_memory.shared_memory_ring_buffer import SharedMemoryRingBuffer
 
-import rospy
+import rclpy
+from rclpy.node import Node
 from message_filters import ApproximateTimeSynchronizer, Subscriber
-from arm_control.msg import JointInformation
-from arm_control.msg import JointControl
 from arm_control.msg import PosCmd
+from arx5_arm_msg.msg import RobotCmd, RobotStatus
 from sensor_msgs.msg import Image
 import threading
 from cv_bridge import CvBridge
@@ -70,6 +70,38 @@ actual_gripper_width_max = 5.0
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 np.set_printoptions(suppress=True)
 
+
+class ArxControl(Node):
+
+    def __init__(self):
+        super().__init__('arx_control')
+
+        self.pub_ = self.create_publisher(RobotCmd, 'arm_cmd', 10)
+        self.sub_ = self.create_subscription(
+                RobotStatus,'arm_status', self.listener_callback,10)
+        self.pub_
+        self.sub_  # prevent unused variable warning
+        timer_period = 0.2
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.cmd_ = None
+
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg)
+        self.arm_status_ = msg
+    
+    def timer_callback(self):
+        msg = RobotCmd()
+        # msg.data[0] = 0.0
+        self.pub_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg)
+
+    def set_cmd(self, cmd):
+        self.cmd_ = cmd
+
+    def get_arm_status(self):
+        return self.arm_status_
+
+
 # @click.command()
 # @click.option("--input_path", "-ip", required=True, help="Path to checkpoint",)
 # @click.option("--output_path", "-op", required=True, default="/home/dc/Desktop/diffusion-policy-inference-master/data/", help="Output video path")
@@ -79,21 +111,24 @@ np.set_printoptions(suppress=True)
 
 # @profile
 def main(
-    input_path,
-    output_path,
-    frequency,
-    steps_per_inference,
-    max_step
+    # input_path,
+    # output_path,
+    # frequency,
+    # steps_per_inference,
+    # max_step
 ):
+    rclpy.init()
+    arx_control = ArxControl()
+    rclpy.spin(arx_control)
     global obs_ring_buffer, current_step
-
+    frequency = 10
 
     dt = 1 / frequency
     video_capture_fps = 30
     max_obs_buffer_size = 30
 
     # load checkpoint
-    ckpt_path = input_path
+    # ckpt_path = input_path
     payload = torch.load(open(ckpt_path, "rb"), map_location="cpu", pickle_module=dill)
     cfg = payload["cfg"]
     print(cfg)

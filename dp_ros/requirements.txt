@@ -2,7 +2,9 @@ torch=1.12.1
 dill==0.3.5.1
 hydra-core=1.2.0
 scikit-video=1.1.11
-
+zarr==2.12.0
+numpy==1.24
+atomics
 # pytorch3d=0.7.0
 # numba==0.56.4
 #   - scipy==1.9.1
