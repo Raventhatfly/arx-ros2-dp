@@ -119,10 +119,11 @@ def main(
 ):
     rclpy.init()
     arx_control = ArxControl()
-    rclpy.create_node("node")
-    rclpy.spin(arx_control)
+
     global obs_ring_buffer, current_step
     frequency = 10
+    print(os.getcwd())
+    ckpt_path = "./src/arx-ros2-dp//dp_ros/dp_ros/latest.ckpt"
 
     dt = 1 / frequency
     video_capture_fps = 30
@@ -130,11 +131,13 @@ def main(
 
     # load checkpoint
     # ckpt_path = input_path
+    
     payload = torch.load(open(ckpt_path, "rb"), map_location="cpu", pickle_module=dill)
     cfg = payload["cfg"]
     print(cfg)
     # exit()
-    cfg._target_ = "codebase.diffusion_policy." + cfg._target_  # can delete
+    # cfg._target_ = "diffusion_policy." + cfg._target_  # can delete
+    cfg._target_ = "diffusion_policy.workspace.train_workspace.TrainDiffusionWorkspace"
 
     cls = hydra.utils.get_class(cfg._target_)
     workspace: BaseWorkspace = cls(cfg)
@@ -226,9 +229,10 @@ def main(
     rate = rospy.Rate(frequency)
 
 
-    # data ??
-    last_data = None
-    right_control = JointControl()
+    # # data ??
+    # last_data = None
+    # right_control = JointControl()
+    joint_data = arx_control.arm_status_
     
 
     # start
@@ -247,6 +251,8 @@ def main(
 
     # inference loop
     while not rclpy.ok():
+        rclpy.spin_once(arx_control)
+        
         if current_step >= max_step:
             break
 
