@@ -34,9 +34,10 @@ import matplotlib.pyplot as plt
 
 def main():
     rclpy.init()
+    img1_topic = "/camera/camera/color/image_rect_raw"
     arm_control_node = rclpy.create_node("arm_control_node")
     arm_control_pub = arm_control_node.create_publisher(PosCmd, 'arm_control', 10)
-    img1 = message_filters.Subscriber(arm_control_node,Image,"img1")
+    img1 = message_filters.Subscriber(arm_control_node,Image, img1_topic)
     arm_status = message_filters.Subscriber(arm_control_node, RobotStatus, "arm_status")
     ats = message_filters.ApproximateTimeSynchronizer(
         [arm_status, img1], queue_size=10, slop=0.1
@@ -57,18 +58,20 @@ def main():
 
     rclpy.shutdown()
 
-def callback(eef_qpos, qpos, img1):
-    global obs_ring_buffer
-    obs_data = dict()
-    obs_data["eef_qpos"] = np.array(
-        [
-            eef_qpos.x,
-            eef_qpos.y,
-            eef_qpos.z,
-            eef_qpos.roll,
-            eef_qpos.pitch,
-            eef_qpos.yaw,
-            eef_qpos.gripper,
-        ]
-    )
-    gripper_width = qpos.joint_pos[6]
+def callback(arm_status, img1):
+    
+    
+    # global obs_ring_buffer
+    # obs_data = dict()
+    # obs_data["eef_qpos"] = np.array(
+    #     [
+    #         eef_qpos.x,
+    #         eef_qpos.y,
+    #         eef_qpos.z,
+    #         eef_qpos.roll,
+    #         eef_qpos.pitch,
+    #         eef_qpos.yaw,
+    #         eef_qpos.gripper,
+    #     ]
+    # )
+    # gripper_width = qpos.joint_pos[6]
