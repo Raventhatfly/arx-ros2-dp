@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dp_inference = dp_ros.dp_inference:main',
+            'pub_sub_test = dp_ros.pub_sub_test:main',
         ],
     },
 )

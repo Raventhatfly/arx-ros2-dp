@@ -54,7 +54,7 @@ from diffusion_policy.shared_memory.shared_memory_ring_buffer import SharedMemor
 
 import rclpy
 from rclpy.node import Node
-from message_filters import ApproximateTimeSynchronizer, Subscriber
+# from message_filters import ApproximateTimeSynchronizer, Subscriber
 import message_filters
 from arm_control.msg import PosCmd
 from arx5_arm_msg.msg import RobotCmd, RobotStatus
@@ -82,7 +82,7 @@ class ArxControl(Node):
                 RobotStatus,'arm_status', self.listener_callback,10)
         self.pub_
         self.sub_  # prevent unused variable warning
-        timer_period = 0.2
+        timer_period = 0.2 import ApproximateTimeSynchronizer, Subscriber
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.cmd_ = None
 
@@ -214,13 +214,14 @@ def main(
 
     # ros init and subscriber
     # rclpy.init("eval_real_ros")
-    arm_status = Subscriber("arm_status", RobotStatus)
+    arm_status = message_filters.Subscriber("arm_status", RobotStatus)
     # qpos = Subscriber("joint_information2", JointInformation)
-    img1 = Subscriber("mid_camera", Image)
-    img2 = Subscriber("right_camera", Image)
+    img1 = message_filters.Subscriber("img2", Image)
+    img2 = message_filters.Subscriber("img1", Image)
     # control_robot2 = rospy.Publisher("test_right", JointControl, queue_size=10)
     # control_robot2 = rclpy.Publisher("follow_joint_control_2", JointControl, queue_size=10)
-    ats = ApproximateTimeSynchronizer(
+    arm_control_pub = rclpy.create_publisher(PosCmd, 'arm_cmd', 10)
+    ats = message_filters.ApproximateTimeSynchronizer(
         [arm_status, img1, img2], queue_size=10, slop=0.1
     )
     ats.registerCallback(
@@ -406,10 +407,10 @@ def callback(eef_qpos, qpos, image_mid, image_right, output_video_visualization,
     )
 
     # process images observation
-    mid = bridge.imgmsg_to_cv2(mid, "bgr8")
-    right = bridge.imgmsg_to_cv2(right, "bgr8")
-    obs_data["mid"] = transform(mid)
-    obs_data["right"] = transform(right)
+    img1 = bridge.imgmsg_to_cv2(mid, "bgr8")
+    img2 = bridge.imgmsg_to_cv2(right, "bgr8")
+    obs_data["img1"] = transform(mid)
+    obs_data["img2"] = transform(right)
     obs_data["timestamp"] = receive_time
     # obs_data["mid_orig"] = mid
     # obs_data["right_orig"] = right
